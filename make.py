@@ -89,23 +89,48 @@ driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install())
 #     print(f"Saved {len(links_set)} unique links to {file_path}")
 # save_links_to_file(all_links)
 
-
-# read the links from the file links.txt and store them in a list
 def read_links_from_file():
-    links = []
     file_path = os.path.join(os.getcwd(), 'make.com_links.txt')
     with open(file_path, 'r') as file:
         links = file.readlines()
-    
     return links
 
-links = read_links_from_file()
+def appendProduct(file_path2, data):
+    temp_file = 'temp_file.csv'
+    if os.path.isfile(file_path2):
+        df = pd.read_csv(file_path2, encoding='utf-8')
+    else:
+        df = pd.DataFrame()
+
+    df_new_row = pd.DataFrame([data])
+    df = pd.concat([df, df_new_row], ignore_index=True)
+
+    try:
+        df.to_csv(temp_file, index=False, encoding='utf-8')
+    except Exception as e:
+        print(f"An error occurred while saving the temporary file: {str(e)}")
+        return False
+
+    try:
+        os.replace(temp_file, file_path2)
+    except Exception as e:
+        print(f"An error occurred while replacing the original file: {str(e)}")
+        return False
+
+    return True
 
 module_data = []
 template_data = []
+
 def get_data(links):
-    # for the first 5 links
-    for i in range(5):
+    last_processed_link_file = 'last_processed_link.txt'
+    start_index = 0
+
+    if os.path.exists(last_processed_link_file):
+        with open(last_processed_link_file, 'r') as f:
+            start_index = int(f.read().strip())
+
+    for i in range(start_index, len(links)):
         try:
             driver.get(links[i])
             time.sleep(2)
@@ -116,13 +141,27 @@ def get_data(links):
                     time.sleep(2)
             except NoSuchElementException:
                 pass
-            
-            name_of_integration = driver.find_element(By.XPATH, "//h1[@class='h2']").text
-            name_of_tool = driver.find_element(By.XPATH, "//div[@class='AppOwnerCard_appOwnerCardHeaderTitle__pF_f4']").text
-            link_of_page = driver.current_url
-            logo_link = driver.find_element(By.XPATH, "//div[@class='AppOwnerCard_appOwnerCardHeader__PsSIo']//img").get_attribute('src')
-            description = driver.find_element(By.XPATH, "//div[@class='body-large DetailsHeader_bodyText__jxP_H DetailsHeader_truncated__GC7Wi']//p").text
-            
+
+            try:
+                name_of_integration = driver.find_element(By.XPATH, "//h1[@class='h2']").text
+            except:
+                name_of_integration = ''
+            try:    
+                name_of_tool = driver.find_element(By.XPATH, "//div[@class='AppOwnerCard_appOwnerCardHeaderTitle__pF_f4']").text
+            except:
+                name_of_tool = ''
+            try:
+                link_of_page = driver.current_url
+            except:
+                link_of_page = ''
+            try:
+                logo_link = driver.find_element(By.XPATH, "//div[@class='AppOwnerCard_appOwnerCardHeader__PsSIo']//img").get_attribute('src')
+            except:
+                logo_link = ''
+            try:
+                description = driver.find_element(By.XPATH, "//div[@class='body-large DetailsHeader_bodyText__jxP_H DetailsHeader_truncated__GC7Wi']//p").text
+            except:
+                description = ''
             try:
                 trigger_action_div = driver.find_element(By.XPATH, "//div[@data-cy='TriggersAndActions']")
                 
@@ -134,7 +173,6 @@ def get_data(links):
                         driver.execute_script("arguments[0].click();", load_more)
                         time.sleep(3)    
                     except NoSuchElementException:
-                        
                         break
                     except Exception as e:
                         print(f"An error occurred while clicking 'Load More' button: {str(e)}")
@@ -154,7 +192,7 @@ def get_data(links):
                         'Module Description': module_descp[module].text,
                         'Module Type': module_type[module].text,
                     }
-                    module_data.append(data)
+                    appendProduct('make.com_module_data.csv', data)
                 
             except NoSuchElementException:
                 data = {
@@ -167,7 +205,7 @@ def get_data(links):
                     'Module Description': '',
                     'Module Type': '',
                 }
-                module_data.append(data)
+                appendProduct('make.com_module_data.csv', data)
 
             try:
                 template_div = driver.find_element(By.XPATH, "//div[@class='container SimilarTemplatesSearch_templates__g0gC_']")
@@ -180,7 +218,6 @@ def get_data(links):
                         driver.execute_script("arguments[0].click();", load_more)
                         time.sleep(3)
                     except NoSuchElementException:
-                        
                         break
                     except Exception as e:
                         print(f"An error occurred while clicking 'Load More' button: {str(e)}")
@@ -200,7 +237,7 @@ def get_data(links):
                         'Template Description': template_descp[template].text,
                         'Template Link': template_link[template].get_attribute('href'),
                     }
-                    template_data.append(data)
+                    appendProduct('make.com_template_data.csv', data)
             
             except NoSuchElementException:
                 data = {
@@ -213,18 +250,25 @@ def get_data(links):
                     'Template Description': '',
                     'Template Link': '',
                 }
-                template_data.append(data)
-        
+                appendProduct('make.com_template_data.csv', data)
+            with open(last_processed_link_file, 'w') as f:
+                f.write(str(i+1))
+        except WebDriverException as we:
+            print(f"An error occurred while processing link {links[i]}")
+            break
+            
         except Exception as e:
-            print(f"An error occurred while processing link {links[i]}: {str(e)}")
-            pass
+            # print(f"An error occurred while processing link {links[i]}: {str(e)}")
+            print(f"An error occurred while processing link {links[i]}")
+            break
+        
+        
+
+links = read_links_from_file()
 
 get_data(links)
 
-module_df = pd.DataFrame(module_data, columns=['Name of Integration', 'Name of Tool', 'Link of Page', 'Logo Link', 'Description', 'Module Name', 'Module Description', 'Module Type'])
-template_df = pd.DataFrame(template_data, columns=['Name of Integration', 'Name of Tool', 'Link of Page', 'Logo Link', 'Description', 'Template Name', 'Template Description', 'Template Link'])
 
-module_df.to_csv('make.com_module_data.csv', index=False)
-template_df.to_csv('make.com_template_data.csv', index=False)
+driver.quit()
     
 
