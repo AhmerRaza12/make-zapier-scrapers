@@ -28,7 +28,7 @@ Options.add_argument('--no-sandbox')
 Options.add_argument('--disable-dev-shm-usage')
 Options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3')
 Options.add_argument('--start-maximized')
-# Options.add_argument('--headless=new')
+Options.add_argument('--headless=new')
 
 
 driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=Options)
@@ -192,7 +192,7 @@ def get_data(links):
                         'Module Description': module_descp[module].text,
                         'Module Type': module_type[module].text,
                     }
-                    appendProduct('make.com_module_data.csv', data)
+                    appendProduct('make.com_module_data_3.csv', data)
                 
             except NoSuchElementException:
                 data = {
@@ -205,7 +205,7 @@ def get_data(links):
                     'Module Description': '',
                     'Module Type': '',
                 }
-                appendProduct('make.com_module_data.csv', data)
+                appendProduct('make.com_module_data_3.csv', data)
 
             try:
                 template_div = driver.find_element(By.XPATH, "//div[@class='container SimilarTemplatesSearch_templates__g0gC_']")
@@ -237,7 +237,7 @@ def get_data(links):
                         'Template Description': template_descp[template].text,
                         'Template Link': template_link[template].get_attribute('href'),
                     }
-                    appendProduct('make.com_template_data.csv', data)
+                    appendProduct('make.com_template_data_3.csv', data)
             
             except NoSuchElementException:
                 data = {
@@ -250,7 +250,7 @@ def get_data(links):
                     'Template Description': '',
                     'Template Link': '',
                 }
-                appendProduct('make.com_template_data.csv', data)
+                appendProduct('make.com_template_data_3.csv', data)
             with open(last_processed_link_file, 'w') as f:
                 f.write(str(i+1))
         except WebDriverException as we:
