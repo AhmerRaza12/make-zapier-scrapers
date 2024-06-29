@@ -76,7 +76,7 @@ with open('makker.com_template_links.txt', 'r') as file:
 
 def scrape_data():
     data_list=[]
-    # for the first 5 links
+   
     for url in urls:
         try:
 
@@ -89,6 +89,10 @@ def scrape_data():
             # get the tools used in the template by joining them with ','
             template_tools = ', '.join([tool.text for tool in template_tools_xpath])
             template_img_links = driver.find_elements(By.XPATH,"//div[@class='included-tools w-dyn-item']//div[@class='icon-cube_container smaller-cube']//img")
+            try:
+                make_redirect_link = driver.find_element(By.XPATH,"(//a[.='Cloner le scenario'])[1]").get_attribute('href')
+            except:
+                make_redirect_link = " "
             # for each img get the src attribute and save in variable img_links by joining them with ','
             img_links = '\n'.join([img.get_attribute('src') for img in template_img_links])
             data={
@@ -96,9 +100,10 @@ def scrape_data():
                 'Template Description':template_description,
                 'Tools Used in Template':template_tools,
                 'Images ':img_links,
-                'Link of Page':page_link,   
+                'Link of Page':page_link,
+                'Make.com Redirect Link': make_redirect_link   
             }
-            # print(data)
+            print(data)
             data_list.append(data)
         except Exception as e:
             print(f"An error occured while getting the url : {str(e)}")
@@ -154,12 +159,12 @@ if __name__ == '__main__':
     # with open('makker.com_template_links.txt', 'w') as file:
     #     for link in total_links:
     #         file.write(link + '\n')
-    # data=scrape_data()
-    # # include the headers in the csv file
-    # df = pd.DataFrame(data)
-    # df.to_csv('makker.com_templates.csv', mode='a', header=True, index=False,encoding='utf-8')
-    # print(df)
-    blogs=get_blog()
-    df = pd.DataFrame(blogs)
-    df.to_csv('makker.com_blogs.csv', mode='a', header=True, index=False,encoding='utf-8')
+    data=scrape_data()
+    # include the headers in the csv file
+    df = pd.DataFrame(data)
+    df.to_csv('makker.com_templates.csv', mode='a', header=True, index=False,encoding='utf-8')
     print(df)
+    # blogs=get_blog()
+    # df = pd.DataFrame(blogs)
+    # df.to_csv('makker.com_blogs.csv', mode='a', header=True, index=False,encoding='utf-8')
+    # print(df)
