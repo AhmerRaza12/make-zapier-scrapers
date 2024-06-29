@@ -33,10 +33,9 @@ Options.add_argument('--start-maximized')
 
 driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=Options)
 
-# links set to store the links
+
 links = set()
 def get_links():
-    # read the urls from makker.com_links.txt file
     with open('makker.com_links.txt', 'r') as file:
         urls = file.read().splitlines()
     try:
@@ -58,12 +57,12 @@ def get_links():
                 except Exception as e:
                     print(f"An errror occured while clicking the next page button :  {str(e)}")
                     pass
-            # get the links from the page
+            
             links_xpath = driver.find_elements(By.XPATH, "//a[@class='w-inline-block']")
             print(f"In url:{url} found total templates: {len(links_xpath)}")
             for link in links_xpath:
                 links.add(link.get_attribute('href'))
-                # print(link.get_attribute('href'))
+                print(link.get_attribute('href'))
             
     except Exception as e:
         print(f"An error occured while getting the links : {str(e)}")
@@ -93,7 +92,6 @@ def scrape_data():
                 make_redirect_link = driver.find_element(By.XPATH,"(//a[.='Cloner le scenario'])[1]").get_attribute('href')
             except:
                 make_redirect_link = " "
-            # for each img get the src attribute and save in variable img_links by joining them with ','
             img_links = '\n'.join([img.get_attribute('src') for img in template_img_links])
             data={
                 'Template Name':template_name,
@@ -153,18 +151,17 @@ def get_blog():
 
 
 if __name__ == '__main__':
-    # total_links=get_links()
-    # print(f"Total links found: {len(total_links)}")
-    # # add the links to the file makker.com_template_links.txt
-    # with open('makker.com_template_links.txt', 'w') as file:
-    #     for link in total_links:
-    #         file.write(link + '\n')
+    total_links=get_links()
+    print(f"Total links found: {len(total_links)}")
+    # add the links to the file makker.com_template_links.txt
+    with open('makker.com_template_links.txt', 'w') as file:
+        for link in total_links:
+            file.write(link + '\n')
     data=scrape_data()
-    # include the headers in the csv file
     df = pd.DataFrame(data)
     df.to_csv('makker.com_templates.csv', mode='a', header=True, index=False,encoding='utf-8')
     print(df)
-    # blogs=get_blog()
-    # df = pd.DataFrame(blogs)
-    # df.to_csv('makker.com_blogs.csv', mode='a', header=True, index=False,encoding='utf-8')
-    # print(df)
+    blogs=get_blog()
+    df = pd.DataFrame(blogs)
+    df.to_csv('makker.com_blogs.csv', mode='a', header=True, index=False,encoding='utf-8')
+    print(df)
